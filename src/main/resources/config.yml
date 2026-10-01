@@ -1,9 +1,5 @@
 ###### bitesize plugin! ######
-enabled: true
-version: 1.4
-
-remove-vanilla-commands:
-  - ""
+version: 1.0
 
 # Timezone used for displaying creation dates (e.g. UTC, America/New_York)
 timezone: 'UTC'
