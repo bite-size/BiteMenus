@@ -2,34 +2,37 @@ package gg.bitesize.menus.managers
 
 import gg.bitesize.menus.BiteMenus.Companion.INSTANCE
 import gg.bitesize.menus.commands.BaseCommand
+import gg.bitesize.menus.commands.BiteMenusCommand
 import org.bukkit.Bukkit
+import org.bukkit.command.Command
+import org.bukkit.command.CommandMap
 
 object CommandManager {
 
-    private val commandMap: org.bukkit.command.CommandMap = try {
+    private val commandMap: CommandMap = try {
         val method = Bukkit.getServer().javaClass.getDeclaredMethod("getCommandMap")
-        method.invoke(Bukkit.getServer()) as org.bukkit.command.CommandMap
+        method.invoke(Bukkit.getServer()) as CommandMap
     } catch (e: Exception) {
         val field = Bukkit.getServer().javaClass.getDeclaredField("commandMap")
         field.isAccessible = true
-        field.get(Bukkit.getServer()) as org.bukkit.command.CommandMap
+        field.get(Bukkit.getServer()) as CommandMap
     }
     
-    private val knownCommands: MutableMap<String, org.bukkit.command.Command> = try {
+    private val knownCommands: MutableMap<String, Command> = try {
         val method = commandMap.javaClass.getDeclaredMethod("getKnownCommands")
         @Suppress("UNCHECKED_CAST")
-        method.invoke(commandMap) as MutableMap<String, org.bukkit.command.Command>
+        method.invoke(commandMap) as MutableMap<String, Command>
     } catch (e: Exception) {
         val field = commandMap.javaClass.getDeclaredField("knownCommands")
         field.isAccessible = true
         @Suppress("UNCHECKED_CAST")
-        field.get(commandMap) as MutableMap<String, org.bukkit.command.Command>
+        field.get(commandMap) as MutableMap<String, Command>
     }
     
     private val registeredCommands = mutableSetOf<BaseCommand>()
 
     fun registerAll() {
-        register(gg.bitesize.menus.commands.BiteMenusCommand())
+        register(BiteMenusCommand())
     }
 
     fun register(command: BaseCommand) {

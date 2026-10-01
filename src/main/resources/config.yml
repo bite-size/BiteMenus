@@ -1,10 +1,15 @@
-###### bitesize plugin! ######
+############# BiteMenus #############
+#####    Created by: bitesize    ####
+#####   https://www.bitesize.gg  ####
+#####################################
 version: 1.0
 
 # Timezone used for displaying creation dates (e.g. UTC, America/New_York)
 timezone: 'UTC'
 
+# When a menu is created, these are the default settings that are set.
 menu-defaults:
+  #use <menu_name> to grab the name of the menu in the permission.
   permission: "bitemenus.menu.<menu_name>"
   auto_refresh: true
   filler_item:

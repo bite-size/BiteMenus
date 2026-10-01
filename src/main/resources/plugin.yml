@@ -2,6 +2,5 @@ name: BiteMenus
 version: 1.0
 main: gg.bitesize.menus.BiteMenus
 api-version: 26.3
-description: An efficient GUI builder that lets you create, design, and configure your server's menus entirely in-game.
 author: bitesize
 website: https://bitesize.gg

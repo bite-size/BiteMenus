@@ -1,7 +1,22 @@
-###### bitesize messages ######
+############# BiteMenus #############
+#####    Created by: bitesize    ####
+#####   https://www.bitesize.gg  ####
+#####################################
 prefix: '<aqua>[BiteMenus] '
 error-prefix: '<red>!! '
 
+# Variables:
+# - <label> = command label.
+# - <time> = time remaining for cooldown.
+# - <menu> = name of the menu currently being interacted with.
+# - <menus> = list of all menus.
+# - <slot> = number slot that was interacted with.
+# - <value> = row or flag value being displayed or set.
+# - <cost> = cost of a transaction (e.g. "$10.00").
+# - <title> = title of a menu.
+# - <size> = size of a menu.
+# - <date> = creation date of a menu.
+# - <flag> = name of the flag being set.
 
 errors:
   player-not-found: '<red>Player not found.'
