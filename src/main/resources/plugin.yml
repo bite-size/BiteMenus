@@ -1,7 +1,7 @@
-name: PluginTemplate
-version: 1.4
-main: gg.bitesize.plugin.Main
+name: BiteMenus
+version: 1.0
+main: gg.bitesize.menus.BiteMenus
 api-version: 26.3
-description: bitesize plugin template base
+description: An efficient GUI builder that lets you create, design, and configure your server's menus entirely in-game.
 author: bitesize
 website: https://bitesize.gg

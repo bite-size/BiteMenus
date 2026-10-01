@@ -1,3 +1,1 @@
-
-rootProject.name = "Template"
-
+rootProject.name = "BiteMenus"

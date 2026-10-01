@@ -2,20 +2,32 @@ plugins {
     application
     kotlin("jvm") version "2.4.0"
     id("com.gradleup.shadow") version "9.4.2"
-    id("io.papermc.paperweight.userdev") version "2.0.0-beta.21"
     id("xyz.jpenilla.run-paper") version "3.0.2"
 }
 
 group = "gg.bitesize"
-version = "1.4"
+version = "1.0"
 
 repositories {
     mavenCentral()
     maven("https://repo.papermc.io/repository/maven-public/")
+    maven("https://jitpack.io")
+    maven("https://repo.extendedclip.com/content/repositories/placeholderapi/")
+    maven("https://hub.spigotmc.org/nexus/content/repositories/snapshots/")
 }
 
 dependencies {
-    paperweight.paperDevBundle("26.3.build.+")
+    compileOnly("org.spigotmc:spigot-api:1.13.2-R0.1-SNAPSHOT")
+    implementation("net.kyori:adventure-api:4.17.0")
+    implementation("net.kyori:adventure-text-minimessage:4.17.0")
+    implementation("net.kyori:adventure-text-serializer-legacy:4.17.0")
+    
+    compileOnly("com.github.MilkBowl:VaultAPI:1.7") {
+        exclude(group = "org.bukkit", module = "bukkit")
+    }
+    compileOnly("me.clip:placeholderapi:2.11.6") {
+        exclude(group = "org.bukkit", module = "bukkit")
+    }
 }
 
 tasks {
@@ -23,9 +35,13 @@ tasks {
         dependsOn(shadowJar)
     }
 
+    shadowJar {
+        relocate("net.kyori", "gg.bitesize.menus.libs.kyori")
+    }
+
     compileJava {
         options.encoding = Charsets.UTF_8.name()
-        options.release.set(25)
+        options.release.set(11)
     }
 
     javadoc {
@@ -42,9 +58,11 @@ tasks {
 }
 
 kotlin {
-    jvmToolchain(25)
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11)
+    }
 }
 
 application {
-    mainClass.set("MainKt")
+    mainClass.set("BiteMenusKt")
 }

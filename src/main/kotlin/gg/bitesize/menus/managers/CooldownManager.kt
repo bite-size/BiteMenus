@@ -1,8 +1,8 @@
-package gg.bitesize.template.managers
+package gg.bitesize.menus.managers
 
 import com.google.common.cache.Cache
 import com.google.common.cache.CacheBuilder
-import gg.bitesize.template.Main.Companion.INSTANCE
+import gg.bitesize.menus.BiteMenus.Companion.INSTANCE
 import org.bukkit.configuration.file.YamlConfiguration
 import org.bukkit.entity.Player
 import java.io.File
@@ -14,7 +14,7 @@ import kotlin.math.max
 object CooldownManager {
 
     private val cache: Cache<String, Long> = CacheBuilder.newBuilder()
-        .expireAfterWrite(Duration.ofMinutes(60))
+        .expireAfterWrite(60, TimeUnit.MINUTES)
         .build()
 
     private lateinit var file: File

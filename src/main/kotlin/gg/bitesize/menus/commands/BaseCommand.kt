@@ -1,4 +1,4 @@
-package gg.bitesize.template.commands
+package gg.bitesize.menus.commands
 
 import org.bukkit.command.Command
 import org.bukkit.command.CommandSender

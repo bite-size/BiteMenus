@@ -4,3 +4,14 @@ version: 1.4
 
 remove-vanilla-commands:
   - ""
+
+# Timezone used for displaying creation dates (e.g. UTC, America/New_York)
+timezone: 'UTC'
+
+menu-defaults:
+  permission: "bitemenus.menu.<menu_name>"
+  auto_refresh: true
+  filler_item:
+    material: "GRAY_STAINED_GLASS_PANE"
+    name: ' '
+    hide_attributes: true

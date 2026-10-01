@@ -1,6 +1,6 @@
-package gg.bitesize.template.managers
+package gg.bitesize.menus.managers
 
-import gg.bitesize.template.Main.Companion.INSTANCE
+import gg.bitesize.menus.BiteMenus.Companion.INSTANCE
 import org.bukkit.configuration.file.FileConfiguration
 import org.bukkit.configuration.file.YamlConfiguration
 import java.io.File
@@ -71,6 +71,30 @@ object ConfigManager {
 
     fun getMessage(path: String, default: String = MESSAGE_NOT_FOUND): String {
         return messages.getString(path) ?: default
+    }
+
+    fun getDefaultMenuPermission(menuName: String): String? {
+        val perm = CONFIG.getString("menu-defaults.permission")
+        if (perm.isNullOrEmpty() || perm.equals("none", ignoreCase = true)) return null
+        return perm.replace("<menu_name>", menuName)
+    }
+
+    fun getDefaultAutoRefresh(): Boolean {
+        return CONFIG.getBoolean("menu-defaults.auto_refresh", true)
+    }
+
+    fun getDefaultFillerItem(): String? {
+        val mat = CONFIG.getString("menu-defaults.filler_item.material")
+        if (mat.isNullOrEmpty() || mat.equals("none", ignoreCase = true)) return null
+        return mat
+    }
+
+    fun getDefaultFillerName(): String {
+        return CONFIG.getString("menu-defaults.filler_item.name") ?: " "
+    }
+
+    fun getDefaultFillerHideAttributes(): Boolean {
+        return CONFIG.getBoolean("menu-defaults.filler_item.hide_attributes", true)
     }
 
 }
