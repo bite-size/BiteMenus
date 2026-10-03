@@ -13,7 +13,7 @@ object ConfigManager {
     lateinit var messages: FileConfiguration
         private set
 
-    private const val MESSAGE_NOT_FOUND = "<red>Message not found. Check <gray>messages.yml<red>.</red>"
+    private const val MESSAGE_NOT_FOUND = "<#F7567C>Message not found. Check <gray>messages.yml<#F7567C>.</red>"
 
     fun loadConfigs() {
         INSTANCE.saveDefaultConfig()
@@ -31,15 +31,7 @@ object ConfigManager {
         messages = YamlConfiguration.loadConfiguration(messagesFile)
     }
 
-    fun saveConfigs() {
-        INSTANCE.saveConfig()
-        try {
-            messages.save(messagesFile)
-        } catch (e: Exception) {
-            INSTANCE.logger.severe("Could not save messages.yml to disk.")
-            e.printStackTrace()
-        }
-    }
+
 
     fun getString(path: String, default: String = ""): String {
         return CONFIG.getString(path) ?: default

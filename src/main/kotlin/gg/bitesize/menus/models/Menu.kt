@@ -52,7 +52,7 @@ data class Menu(
 
     fun open(player: Player) {
         if (permission != null && !player.hasPermission(permission!!)) {
-            FormatManager.error(player, "<red>You do not have permission to open this menu.")
+            FormatManager.error(player, "<#F7567C>You do not have permission to open this menu.")
             return
         }
 
@@ -112,6 +112,24 @@ data class Menu(
                 }
 
                 player.openInventory(inventory)
+
+                if (autoRefresh && !isEditing) {
+                    object : org.bukkit.scheduler.BukkitRunnable() {
+                        override fun run() {
+                            if (!player.isOnline) {
+                                cancel()
+                                return
+                            }
+                            val currentInv = player.openInventory.topInventory
+                            val currentHolder = try { currentInv.holder } catch (e: Throwable) { null }
+                            if (currentHolder is MenuHolder && currentHolder.menu.name == name && !EditorManager.isEditing(player)) {
+                                refresh(player, currentInv)
+                            } else {
+                                cancel()
+                            }
+                        }
+                    }.runTaskTimer(INSTANCE, 20L, 20L)
+                }
             })
         })
     }

@@ -44,7 +44,20 @@ object MenuManager {
                     val slot = slotKey.toIntOrNull() ?: return@forEach
                     val buttonSection = config.getConfigurationSection("buttons.$slotKey")!!
                     
-                    val icon = buttonSection.getItemStack("icon")
+                    var icon = buttonSection.getItemStack("icon")
+                    if (icon == null && buttonSection.isConfigurationSection("icon")) {
+                        val iconSec = buttonSection.getConfigurationSection("icon")!!
+                        val matName = iconSec.getString("material", "STONE")!!
+                        val mat = org.bukkit.Material.matchMaterial(matName) ?: org.bukkit.Material.STONE
+                        icon = org.bukkit.inventory.ItemStack(mat)
+                        val meta = icon.itemMeta
+                        if (meta != null) {
+                            iconSec.getString("name")?.let { meta.setDisplayName(it) }
+                            val lore = iconSec.getStringList("lore")
+                            if (lore.isNotEmpty()) meta.lore = lore
+                            icon.itemMeta = meta
+                        }
+                    }
                     val actions = buttonSection.getStringList("actions")
                     
                     val button = Button(
@@ -83,7 +96,20 @@ object MenuManager {
         
         menu.buttons.forEach { slot, button ->
             val path = "buttons.$slot"
-            config.set("$path.icon", button.icon)
+            if (button.icon != null) {
+                val meta = button.icon!!.itemMeta
+                val hasComplexMeta = meta != null && (meta.hasEnchants() || meta.itemFlags.isNotEmpty() || meta.isUnbreakable || meta.hasAttributeModifiers() || meta.javaClass.simpleName != "CraftMetaItem")
+                
+                if (hasComplexMeta) {
+                    config.set("$path.icon", button.icon)
+                } else {
+                    config.set("$path.icon.material", button.icon!!.type.name)
+                    if (meta != null) {
+                        if (meta.hasDisplayName()) config.set("$path.icon.name", meta.displayName)
+                        if (meta.hasLore()) config.set("$path.icon.lore", meta.lore)
+                    }
+                }
+            }
             config.set("$path.actions", button.actions)
             config.set("$path.flags.cooldown", button.cooldown)
             config.set("$path.flags.close_on_click", button.closeOnClick)
@@ -120,10 +146,10 @@ object MenuManager {
         
         val button = Button(
             icon = ItemStack(Material.DIAMOND),
-            actions = mutableListOf("[MESSAGE] <green>You clicked the diamond!")
+            actions = mutableListOf("[MESSAGE] <#4ECDC4>You clicked the diamond!")
         )
         val meta = button.icon!!.itemMeta!!
-        meta.setDisplayName(FormatManager.parseMiniMessage("<aqua><bold>Free Diamond!"))
+        meta.setDisplayName(FormatManager.parseMiniMessage("<#FF0368><bold>Free Diamond!"))
         button.icon!!.itemMeta = meta
         
         example.buttons[13] = button

@@ -27,7 +27,7 @@ class MenuListener : Listener {
     @EventHandler
     fun onClick(event: InventoryClickEvent) {
         val inventory = event.inventory
-        val holder = inventory.holder
+        val holder = try { inventory.holder } catch (e: Throwable) { null }
         if (holder !is MenuHolder) return
 
         val player = event.whoClicked as? Player ?: return
@@ -62,6 +62,10 @@ class MenuListener : Listener {
         val slot = event.slot
         val button = menu.buttons[slot] ?: return
 
+        if (button.closeOnClick) {
+            player.closeInventory()
+        }
+
         if (button.permission != null && !player.hasPermission(button.permission!!)) {
             return
         }
@@ -69,7 +73,7 @@ class MenuListener : Listener {
         val cooldownKey = "btn_${menu.name}_$slot"
         if (button.cooldown > 0 && CooldownManager.isOnCooldown(player, cooldownKey)) {
             val time = CooldownManager.getRemainingFormatted(player, cooldownKey)
-            val msg = ConfigManager.getMessage("errors.cooldown", "<red>Please wait <yellow><time> <red>before doing that.").replace("<time>", time)
+            val msg = ConfigManager.getMessage("errors.cooldown", "<#F7567C>Please wait <#4ECDC4><time> <#F7567C>before doing that.").replace("<time>", time)
             FormatManager.error(player, msg)
             return
         }
@@ -78,21 +82,21 @@ class MenuListener : Listener {
             val economy = VaultManager.economy
             if (economy != null) {
                 if (!economy.has(player, button.cost)) {
-                    val msg = ConfigManager.getMessage("errors.insufficient-funds", "<red>You don't have enough money.")
+                    val msg = ConfigManager.getMessage("errors.insufficient-funds", "<#F7567C>You don't have enough money.")
                     FormatManager.error(player, msg)
                     return
                 }
                 val response = economy.withdrawPlayer(player, button.cost)
                 if (!response.transactionSuccess()) {
-                    val msg = ConfigManager.getMessage("errors.transaction-failed", "<red>Transaction failed.")
+                    val msg = ConfigManager.getMessage("errors.transaction-failed", "<#F7567C>Transaction failed.")
                     FormatManager.error(player, msg)
                     return
                 }
                 val formattedCost = economy.format(button.cost)
-                val successMsg = ConfigManager.getMessage("messages.transaction-success", "<green>Purchased for <cost>.").replace("<cost>", formattedCost)
+                val successMsg = ConfigManager.getMessage("messages.transaction-success", "<#4ECDC4>Purchased for <cost>.").replace("<cost>", formattedCost)
                 FormatManager.send(player, successMsg)
             } else {
-                val msg = ConfigManager.getMessage("errors.vault-unavailable", "<red>Vault economy is not available! Contact an administrator.")
+                val msg = ConfigManager.getMessage("errors.vault-unavailable", "<#F7567C>Vault economy is not available! Contact an administrator.")
                 FormatManager.error(player, msg)
                 return
             }
@@ -119,7 +123,7 @@ class MenuListener : Listener {
                         if (targetMenu != null) {
                             targetMenu.open(player)
                         } else {
-                            val msg = ConfigManager.getMessage("errors.menu-not-found", "<red>Menu not found.")
+                            val msg = ConfigManager.getMessage("errors.menu-not-found", "<#F7567C>Menu not found.")
                             FormatManager.error(player, msg)
                         }
                     } else if (parsedAction.startsWith("[PLAYER]", ignoreCase = true)) {
@@ -133,18 +137,12 @@ class MenuListener : Listener {
                     }
                 })
             }
-
-            if (button.closeOnClick) {
-                Bukkit.getScheduler().runTask(INSTANCE, Runnable {
-                    player.closeInventory()
-                })
-            }
         })
     }
 
     @EventHandler
     fun onDrag(event: InventoryDragEvent) {
-        val holder = event.inventory.holder
+        val holder = try { event.inventory.holder } catch (e: Throwable) { null }
         if (holder is MenuHolder) {
             val player = event.whoClicked as? Player ?: return
             if (ActionQueueManager.hasPendingAction(player)) {
@@ -168,14 +166,14 @@ class MenuListener : Listener {
         
         if (ActionQueueManager.hasPendingAction(player)) {
             ActionQueueManager.cancelAction(player)
-            val msg = ConfigManager.getMessage("messages.selection-cancelled", "<red>Cancelled selection.")
+            val msg = ConfigManager.getMessage("messages.selection-cancelled", "<#F7567C>Cancelled selection.")
             FormatManager.send(player, msg)
             return
         }
 
         if (EditorManager.isEditing(player)) {
             val menu = EditorManager.getEditingMenu(player)
-            val holder = event.inventory.holder
+            val holder = try { event.inventory.holder } catch (e: Throwable) { null }
             if (holder is MenuHolder && holder.menu.name == menu?.name) {
                 // Sync inventory to Menu
                 val topInv = event.view.topInventory
@@ -190,7 +188,7 @@ class MenuListener : Listener {
                 }
                 MenuManager.saveMenu(menu)
                 EditorManager.stopEditing(player)
-                val msg = ConfigManager.getMessage("messages.edit-mode-saved", "<green>Saved and exited Edit Mode for <menu>.").replace("<menu>", menu.name)
+                val msg = ConfigManager.getMessage("messages.edit-mode-saved", "<#4ECDC4>Saved and exited Edit Mode for <menu>.").replace("<menu>", menu.name)
                 FormatManager.send(player, msg)
             }
         }

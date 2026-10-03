@@ -31,23 +31,9 @@ class BiteMenus : JavaPlugin() {
         CommandManager.registerAll()
         CommandManager.syncCommands()
 
-        server.scheduler.runTaskTimerAsynchronously(this, Runnable {
-            for (player in server.onlinePlayers) {
-                val inventory = player.openInventory.topInventory
-                val holder = inventory.holder
-                if (holder is MenuHolder) {
-                    val menu = holder.menu
-                    if (menu.autoRefresh && !EditorManager.isEditing(player)) {
-                        menu.refresh(player, inventory)
-                    }
-                }
-            }
-        }, 20L, 20L)
     }
 
     override fun onDisable() {
-        ConfigManager.saveConfigs()
-
         CommandManager.shutdown()
 
         CooldownManager.shutdown()
