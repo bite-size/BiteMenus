@@ -22,6 +22,7 @@ dependencies {
     implementation("net.kyori:adventure-text-minimessage:4.17.0")
     implementation("net.kyori:adventure-text-serializer-legacy:4.17.0")
     implementation("org.jetbrains.kotlin:kotlin-stdlib")
+    implementation("org.bstats:bstats-bukkit:3.0.2")
     
     compileOnly("com.github.MilkBowl:VaultAPI:1.7") {
         exclude(group = "org.bukkit", module = "bukkit")
@@ -39,6 +40,7 @@ tasks {
     shadowJar {
         relocate("net.kyori", "gg.bitesize.menus.libs.kyori")
         relocate("kotlin", "gg.bitesize.menus.libs.kotlin")
+        relocate("org.bstats", "gg.bitesize.menus.libs.bstats")
     }
 
     compileJava {

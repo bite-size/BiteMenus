@@ -26,6 +26,9 @@ class BiteMenus : JavaPlugin() {
         MenuManager.loadMenus()
         VaultManager.setup()
 
+        val pluginId = 34487 // bStats Plugin ID
+        org.bstats.bukkit.Metrics(this, pluginId)
+
         server.pluginManager.registerEvents(MenuListener(), this)
 
         CommandManager.registerAll()
