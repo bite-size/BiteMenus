@@ -16,9 +16,9 @@
 ## 📥 Installation
 
 **Target Version:** Minecraft `26.3`
-**Plugin Version:** v1.1
+**Plugin Version:** v1.2
 
-1. Download the latest `BiteMenus-1.1.jar` file.
+1. Download the latest `BiteMenus-1.2.jar` file.
 2. Drop the `.jar` into your server's `plugins/` directory.
 3. Restart your server. 
 4. *(Optional but Recommended)* Install **PlaceholderAPI** and **Vault** to unlock dynamic placeholders and button economy costs!

@@ -112,7 +112,8 @@ class BiteMenusCommand : BaseCommand(
                 }
                 val size = if (rawSize <= 6) rawSize * 9 else rawSize
                 val title = if (args.size > 3) args.drop(3).joinToString(" ") else name
-                
+
+                if (!ensureWritable(sender, name)) return true
                 if (MenuManager.getMenu(name) != null) {
                     FormatManager.error(sender, ConfigManager.getMessage("errors.menu-exists", "<#F7567C>Menu already exists."))
                     return true
@@ -145,7 +146,8 @@ class BiteMenusCommand : BaseCommand(
                     FormatManager.error(sender, ConfigManager.getMessage("errors.menu-not-found", "<#F7567C>Menu not found."))
                     return true
                 }
-                
+                if (!ensureWritable(sender, menu.name)) return true
+
                 val msg = ConfigManager.getMessage("messages.opening-edit", "<#4ECDC4>Opening <menu> in Edit Mode.").replace("<menu>", name)
                 FormatManager.send(sender, msg)
                 EditorManager.startEditing(sender, menu)
@@ -167,6 +169,7 @@ class BiteMenusCommand : BaseCommand(
                 }
                 val size = if (rawSize <= 6) rawSize * 9 else rawSize
                 val menu = MenuManager.getMenu(name) ?: return true.also { FormatManager.error(sender, ConfigManager.getMessage("errors.menu-not-found", "<#F7567C>Menu not found.")) }
+                if (!ensureWritable(sender, menu.name)) return true
                 menu.size = size
                 MenuManager.saveMenu(menu)
                 val msg = ConfigManager.getMessage("messages.menu-resized", "<#4ECDC4>Menu <menu> resized to <size>.").replace("<menu>", name).replace("<size>", size.toString())
@@ -181,6 +184,7 @@ class BiteMenusCommand : BaseCommand(
                 }
                 val name = args[1]
                 val menu = MenuManager.getMenu(name) ?: return true.also { FormatManager.error(sender, ConfigManager.getMessage("errors.menu-not-found", "<#F7567C>Menu not found.")) }
+                if (!ensureWritable(sender, menu.name)) return true
                 val newTitle = args.drop(2).joinToString(" ")
                 menu.title = newTitle
                 MenuManager.saveMenu(menu)
@@ -205,9 +209,23 @@ class BiteMenusCommand : BaseCommand(
             }
             "reload" -> {
                 if (!sender.hasPermission("bitemenus.admin.reload")) return true
+                // An open edit session would save its pre-reload copy on close, overwriting the reloaded file
+                val editors = EditorManager.getActiveEditors()
+                if (editors.isNotEmpty()) {
+                    val msg = ConfigManager.getMessage("errors.reload-while-editing", "<#F7567C>Cannot reload while <#4ECDC4><players> <#F7567C>is in Edit Mode. Close the menu first.")
+                        .replace("<players>", editors.joinToString(", ") { it.name })
+                    FormatManager.error(sender, msg)
+                    return true
+                }
+                MenuManager.closeOpenMenus()
                 ConfigManager.reloadConfigs()
                 CooldownManager.loadConfig()
-                MenuManager.loadMenus()
+                val failed = MenuManager.loadMenus()
+                if (failed.isNotEmpty()) {
+                    val msg = ConfigManager.getMessage("errors.reload-menus-failed", "<#F7567C>Could not load <#4ECDC4><menus><#F7567C>. Files were left untouched; check the console.")
+                        .replace("<menus>", failed.joinToString(", "))
+                    FormatManager.error(sender, msg)
+                }
                 FormatManager.send(sender, ConfigManager.getMessage("messages.plugin-reloaded", "<#4ECDC4>Plugin reloaded."))
             }
             "button" -> {
@@ -224,6 +242,7 @@ class BiteMenusCommand : BaseCommand(
                 val actionType = args[1].lowercase()
                 val menuName = args[2]
                 val menu = MenuManager.getMenu(menuName) ?: return true.also { FormatManager.error(sender, ConfigManager.getMessage("errors.menu-not-found", "<#F7567C>Menu not found.")) }
+                if (!ensureWritable(sender, menu.name)) return true
 
                 val action: (Int) -> Unit = when (actionType) {
                     "command" -> {
@@ -333,6 +352,7 @@ class BiteMenusCommand : BaseCommand(
                     return true
                 }
                 val menu = MenuManager.getMenu(args[1]) ?: return true.also { FormatManager.error(sender, ConfigManager.getMessage("errors.menu-not-found", "<#F7567C>Menu not found.")) }
+                if (!ensureWritable(sender, menu.name)) return true
                 val target = args[2].lowercase()
                 
                 if (target == "menu") {
@@ -453,6 +473,15 @@ class BiteMenusCommand : BaseCommand(
             }
         }
         return true
+    }
+
+    // Blocks changes to a menu whose file failed to load, so saving can't overwrite the owner's edits
+    private fun ensureWritable(sender: CommandSender, name: String): Boolean {
+        if (!MenuManager.isUnreadable(name)) return true
+        val msg = ConfigManager.getMessage("errors.menu-file-unreadable", "<#F7567C>The file for <#4ECDC4><menu> <#F7567C>failed to load. Fix it and reload before changing this menu.")
+            .replace("<menu>", name)
+        FormatManager.error(sender, msg)
+        return false
     }
 
     private fun sendHelp(sender: CommandSender, label: String): Boolean {

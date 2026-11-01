@@ -16,6 +16,7 @@ error-prefix: '<#F7567C>!! '
 # - <size> = size of a menu.
 # - <date> = creation date of a menu.
 # - <flag> = name of the flag being set.
+# - <players> = players currently in Edit Mode.
 
 errors:
   player-not-found: '<#F7567C>Player not found.'
@@ -55,6 +56,9 @@ errors:
   invalid-boolean: '<#F7567C>Value must be true or false.'
   invalid-number: '<#F7567C>Value must be a valid number.'
   invalid-permission: '<#F7567C>Invalid permission format.'
+  reload-while-editing: '<#F7567C>Cannot reload while <#4ECDC4><players> <#F7567C>is in Edit Mode. Close the menu first.'
+  reload-menus-failed: '<#F7567C>Could not load <#4ECDC4><menus><#F7567C>. Files were left untouched; check the console.'
+  menu-file-unreadable: '<#F7567C>The file for <#4ECDC4><menu> <#F7567C>failed to load. Fix it and reload before changing this menu.'
 
 messages:
   transaction-success: '<#4ECDC4>Purchased for <cost>.'

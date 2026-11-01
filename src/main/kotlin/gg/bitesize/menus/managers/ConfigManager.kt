@@ -7,7 +7,8 @@ import java.io.File
 
 object ConfigManager {
 
-    private val CONFIG = INSTANCE.config
+    // reloadConfig() swaps in a new FileConfiguration, so always read the current one
+    private val CONFIG get() = INSTANCE.config
 
     private lateinit var messagesFile: File
     lateinit var messages: FileConfiguration
