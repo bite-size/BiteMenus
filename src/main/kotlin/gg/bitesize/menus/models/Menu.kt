@@ -153,7 +153,7 @@ data class Menu(
         }
     }
 
-    private fun renderItem(player: Player, source: ItemStack, isEditing: Boolean): ItemStack {
+    fun renderItem(player: Player, source: ItemStack, isEditing: Boolean): ItemStack {
         val item = source.clone()
         if (!item.hasItemMeta()) return item
         val meta = item.itemMeta ?: return item

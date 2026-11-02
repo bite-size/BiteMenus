@@ -194,6 +194,11 @@ class MenuListener : Listener {
                     if (item == null || item.type == Material.AIR) {
                         menu.buttons.remove(i)
                     } else {
+                        // The editor shows rendered icons, so an untouched slot holds a color-parsed copy.
+                        // Keep the stored icon for those, or each edit session would bake the parsed colors in.
+                        val stored = menu.buttons[i]?.icon
+                        if (stored != null && item.amount == stored.amount &&
+                            menu.renderItem(player, stored, isEditing = true).isSimilar(item)) continue
                         val button = menu.buttons.getOrPut(i) { Button(icon = item) }
                         button.icon = item
                     }
