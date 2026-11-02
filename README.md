@@ -39,7 +39,7 @@
 | `/bm resize <name> <size>` | `bitemenus.admin.resize` | Changes the row size of an existing menu |
 | `/bm retitle <name> <title>` | `bitemenus.admin.retitle` | Changes the title of an existing menu |
 | `/bm button <action> <menu> ...` | `bitemenus.admin.button` | Interactive tool to attach commands/links to items |
-| `/bm flag <menu> <button|menu> <flag> <val>`| `bitemenus.admin.flags` | Modifies properties (like close-on-click or cooldowns) |
+| `/bm flag <menu> <button|menu> <flag> <val>`| `bitemenus.admin.flags` | Modifies properties (like close-on-click, cooldowns, or an API item provider) |
 | `/bm remove <name>` | `bitemenus.admin.remove` | Deletes a menu entirely |
 | `/bm reload` | `bitemenus.admin.reload` | Reloads all configurations and menus |
 
@@ -77,6 +77,8 @@ Every single piece of text sent by the plugin can be customized here!
 ---
 
 ## 🧩 Developer API
+
+*Added in v1.3.*
 
 BiteMenus exposes an API so your own plugins can add custom button actions, draw per-player items, and listen to menu events. Menus are still built in-game; your plugin supplies the behavior and data.
 
@@ -156,3 +158,27 @@ shop.save()
 | `MenuOpenEvent` | Before a menu opens (not in Edit Mode) | Yes |
 | `ButtonClickEvent` | When a button is clicked, before cooldowns and costs | Yes |
 | `MenusReloadedEvent` | After `/bm reload` | No |
+
+---
+
+## 📜 Changelog
+
+### v1.3
+- **Fixed:** Legacy color codes `&a`, `&b`, `&c`, `&e` and `&f` showed Bitesize brand colors instead of green, aqua, red, yellow and white. This affected menu titles, item names and lore in every release since v1.0.
+- **Fixed:** Closing the in-game editor saved each item's displayed (color-parsed) copy back to the menu, which hard-coded the parsed colors into the file. Items you don't change in the editor now keep exactly what was stored.
+- **Added:** `&k` (obfuscated) is now supported.
+- **Added:** [Developer API](#-developer-api) with custom button actions, per-player item providers, menu editing, and open/click/reload events.
+- **Added:** `provider` button flag, which connects a button to an API item provider: `/bm flag <menu> button provider <id>`.
+- **Changed:** BiteMenus now uses the Adventure library bundled with Paper rather than shipping its own copy, so the jar is smaller.
+
+> **Upgrading from v1.2:** If you used the editor on v1.2, some item names or lore may have been saved with the wrong colors written in as hex codes, such as `#4ECDC4` where you used `&a` or `<green>`. The color fixes can't undo those. Re-color the affected items in-game or fix their `name`/`lore` lines in `plugins/BiteMenus/menus/`.
+
+### v1.2
+- **Fixed:** Custom model data, item models, persistent data, enchantments and stack sizes on button icons are no longer lost on `/bm reload`.
+- **Changed:** Menu files that fail to load are reported and left untouched. The last working version stays loaded, and saves to that menu are blocked until the file is fixed.
+
+### v1.1
+- **Added:** bStats metrics.
+
+### v1.0
+- First release: a Kotlin rewrite of LMenus for Paper, with the in-game editor, PlaceholderAPI and Vault support, MiniMessage colors, and auto-refreshing menus.
