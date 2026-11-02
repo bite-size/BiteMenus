@@ -9,6 +9,7 @@
 - **Dynamic Auto-Refresh:** Event-driven, per-player auto-refreshing menus that update Placeholders without global lagging tasks!
 - **Modern Colors:** Built-in support for Kyori Adventure's MiniMessage format (`<#FF0368>`) with backwards compatibility for legacy Bukkit codes (`&c`).
 - **Economy Integration:** Native support for Vault API to add costs to buttons.
+- **Developer API:** Let your own plugins add custom button actions, draw live per-player items, and react to menu events.
 - **bStats Tracking:** Secure and sandboxed bStats implementation to monitor your plugin's growth!
 
 ---
@@ -16,9 +17,9 @@
 ## 📥 Installation
 
 **Target Version:** Minecraft `26.3`
-**Plugin Version:** v1.2
+**Plugin Version:** v1.3
 
-1. Download the latest `BiteMenus-1.2.jar` file.
+1. Download the latest `BiteMenus-1.3.jar` file.
 2. Drop the `.jar` into your server's `plugins/` directory.
 3. Restart your server. 
 4. *(Optional but Recommended)* Install **PlaceholderAPI** and **Vault** to unlock dynamic placeholders and button economy costs!
@@ -72,3 +73,86 @@ Every single piece of text sent by the plugin can be customized here!
 4. Close your inventory to save it.
 5. Run `/bm button command example true broadcast Hello World!` and click an item in the menu to assign the command!
 6. Run `/bm open example` to test it!
+
+---
+
+## 🧩 Developer API
+
+BiteMenus exposes an API so your own plugins can add custom button actions, draw per-player items, and listen to menu events. Menus are still built in-game; your plugin supplies the behavior and data.
+
+### Adding the dependency
+
+The API is published through [JitPack](https://jitpack.io/#bite-size/BiteMenus):
+
+```kotlin
+repositories {
+    maven("https://jitpack.io")
+}
+
+dependencies {
+    compileOnly("com.github.bite-size.BiteMenus:bitemenus-api:v1.3")
+}
+```
+
+Then declare BiteMenus as a dependency in your `plugin.yml`:
+
+```yaml
+depend: [BiteMenus]
+```
+
+### Getting the API
+
+```kotlin
+val menus = BiteMenusApi.get()
+```
+
+All API calls must be made on the main server thread.
+
+### Custom actions
+
+Register a tag, then use it in any button's actions as `[TAG] arguments`. Placeholders and `@p` are already replaced in the arguments.
+
+```kotlin
+menus.registerAction(this, "SHOP") { ctx ->
+    shopService.open(ctx.player, ctx.arguments)
+}
+```
+
+```yaml
+actions:
+  - '[SHOP] weapons'
+```
+
+### Item providers
+
+An item provider draws a button separately for each viewer. Register one, then point a button at it in-game with `/bm flag <menu> button provider <id>`, or set `flags.provider` in the menu's YAML. While the menu is open, auto-refresh redraws the item every second. If the provider returns `null` or isn't loaded, the button's stored icon is shown.
+
+```kotlin
+menus.registerItemProvider(this, "myplugin:balance") { ctx ->
+    ItemStack(Material.GOLD_INGOT).apply {
+        editMeta { it.setDisplayName("&6Balance: &f${economy.balance(ctx.player)}") }
+    }
+}
+```
+
+Actions and providers are removed automatically when your plugin disables.
+
+### Reading and editing menus
+
+```kotlin
+val shop = menus.getMenu("shop") ?: menus.createMenu("shop", "<gold>Shop", 27)
+shop.setButton(13, MenuButton.builder()
+    .icon(ItemStack(Material.DIAMOND))
+    .addAction("[SHOP] gems")
+    .cooldown(5)
+    .build())
+shop.save()
+```
+
+### Events
+
+| Event | Fired | Cancellable |
+|---|---|---|
+| `MenuOpenEvent` | Before a menu opens (not in Edit Mode) | Yes |
+| `ButtonClickEvent` | When a button is clicked, before cooldowns and costs | Yes |
+| `MenusReloadedEvent` | After `/bm reload` | No |

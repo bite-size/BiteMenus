@@ -1,6 +1,8 @@
 package gg.bitesize.menus.commands
 
+import gg.bitesize.menus.api.event.MenusReloadedEvent
 import gg.bitesize.menus.managers.ActionQueueManager
+import gg.bitesize.menus.managers.ApiManager
 import gg.bitesize.menus.managers.ConfigManager
 import gg.bitesize.menus.managers.CooldownManager
 import gg.bitesize.menus.managers.FormatManager
@@ -8,6 +10,7 @@ import gg.bitesize.menus.managers.MenuManager
 import gg.bitesize.menus.managers.EditorManager
 import gg.bitesize.menus.models.Menu
 import gg.bitesize.menus.models.Button
+import org.bukkit.Bukkit
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
 import org.bukkit.Material
@@ -226,6 +229,7 @@ class BiteMenusCommand : BaseCommand(
                         .replace("<menus>", failed.joinToString(", "))
                     FormatManager.error(sender, msg)
                 }
+                Bukkit.getPluginManager().callEvent(MenusReloadedEvent(failed))
                 FormatManager.send(sender, ConfigManager.getMessage("messages.plugin-reloaded", "<#4ECDC4>Plugin reloaded."))
             }
             "button" -> {
@@ -308,6 +312,7 @@ class BiteMenusCommand : BaseCommand(
                                 button.permission = null
                                 button.cost = 0.0
                                 button.visibleNoPermission = true
+                                button.provider = null
                                 MenuManager.saveMenu(menu)
                                 val msg = ConfigManager.getMessage("messages.button-removed", "<#4ECDC4>Cleared actions and flags for slot <slot> in <menu>.").replace("<slot>", slot.toString()).replace("<menu>", menu.name)
                                 FormatManager.send(sender, msg)
@@ -343,6 +348,7 @@ class BiteMenusCommand : BaseCommand(
                     FormatManager.send(sender, ConfigManager.getMessage("flag-list.button.permission", "<gray>- permission <value/none>"))
                     FormatManager.send(sender, ConfigManager.getMessage("flag-list.button.cost", "<gray>- cost <value>"))
                     FormatManager.send(sender, ConfigManager.getMessage("flag-list.button.visible", "<gray>- visible_no_permission <true/false>"))
+                    FormatManager.send(sender, ConfigManager.getMessage("flag-list.button.provider", "<gray>- provider <id/none>"))
                     return true
                 }
                 
@@ -425,6 +431,12 @@ class BiteMenusCommand : BaseCommand(
                                 }
                             }
                         }
+                        "provider" -> {
+                            if (lowerValue != "none" && lowerValue.isNotBlank() && !lowerValue.matches(ApiManager.providerIdRegex)) {
+                                FormatManager.error(sender, ConfigManager.getMessage("errors.invalid-provider", "<#F7567C>Provider ids can only contain letters, digits, _ - . and :"))
+                                return true
+                            }
+                        }
                         "cost" -> {
                             if (lowerValue != "none" && lowerValue.isNotBlank()) {
                                 val cst = value.toDoubleOrNull()
@@ -453,6 +465,7 @@ class BiteMenusCommand : BaseCommand(
                                 "permission" -> button.permission = if (lowerVal == "none" || lowerVal.isBlank()) null else value
                                 "cost" -> button.cost = if (lowerVal == "none" || lowerVal.isBlank()) 0.0 else value.toDouble()
                                 "visible_no_permission" -> button.visibleNoPermission = lowerVal == "true"
+                                "provider" -> button.provider = if (lowerVal == "none" || lowerVal.isBlank()) null else lowerVal
                             }
                             MenuManager.saveMenu(menu)
                             val msg = ConfigManager.getMessage("messages.flag-button-set", "<#4ECDC4>Set button flag <flag> to <value> for slot <slot>.")
@@ -544,7 +557,7 @@ class BiteMenusCommand : BaseCommand(
                 val flags = listOf("auto_refresh", "filler_item", "permission")
                 completions.addAll(flags.filter { it.startsWith(args[3], true) })
             } else if (sub == "flag" && args[2].lowercase() == "button") {
-                val flags = listOf("cooldown", "close_on_click", "permission", "cost", "visible_no_permission")
+                val flags = listOf("cooldown", "close_on_click", "permission", "cost", "visible_no_permission", "provider")
                 completions.addAll(flags.filter { it.startsWith(args[3], true) })
             } else if (sub == "button" && args[1].lowercase() == "command") {
                 completions.addAll(listOf("true", "false").filter { it.startsWith(args[3], true) })
@@ -559,6 +572,8 @@ class BiteMenusCommand : BaseCommand(
                     completions.addAll(Material.values().map { it.name }.filter { it.startsWith(args[4], true) })
                 } else if (flag == "auto_refresh" || flag == "close_on_click" || flag == "visible_no_permission") {
                     completions.addAll(listOf("true", "false").filter { it.startsWith(args[4], true) })
+                } else if (args[2].lowercase() == "button" && flag == "provider") {
+                    completions.addAll((ApiManager.getProviderIds() + "none").filter { it.startsWith(args[4], true) })
                 }
             }
         }

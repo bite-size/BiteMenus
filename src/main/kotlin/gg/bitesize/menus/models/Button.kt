@@ -9,5 +9,6 @@ data class Button(
     var closeOnClick: Boolean = false,
     var permission: String? = null,
     var cost: Double = 0.0,
-    var visibleNoPermission: Boolean = true
+    var visibleNoPermission: Boolean = true,
+    var provider: String? = null
 )

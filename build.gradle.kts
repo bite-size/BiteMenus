@@ -16,10 +16,8 @@ repositories {
 }
 
 dependencies {
-    compileOnly("io.papermc.paper:paper-api:26.3.build.237-stable")
-    implementation("net.kyori:adventure-api:4.17.0")
-    implementation("net.kyori:adventure-text-minimessage:4.17.0")
-    implementation("net.kyori:adventure-text-serializer-legacy:4.17.0")
+    compileOnly("io.papermc.paper:paper-api:${property("paperApiVersion")}")
+    implementation(project(":api"))
     implementation("org.jetbrains.kotlin:kotlin-stdlib")
     implementation("org.bstats:bstats-bukkit:3.0.2")
     
@@ -37,7 +35,6 @@ tasks {
     }
 
     shadowJar {
-        relocate("net.kyori", "gg.bitesize.menus.libs.kyori")
         relocate("kotlin", "gg.bitesize.menus.libs.kotlin")
         relocate("org.bstats", "gg.bitesize.menus.libs.bstats")
     }

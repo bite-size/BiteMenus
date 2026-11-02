@@ -47,6 +47,7 @@ errors:
   usage-flag-button: '<#F7567C>Usage: /<label> flag <menu> button <flag> <value>'
   slot-no-button: '<#F7567C>This slot does not have a button! Please add one using <#4ECDC4>/<label> button command <gray>or <#4ECDC4>/<label> button menu<#F7567C>.'
   unknown-button-flag: '<#F7567C>Unknown button flag.'
+  invalid-provider: '<#F7567C>Provider ids can only contain letters, digits, _ - . and :'
   invalid-flag-target: "<#F7567C>Target must be 'menu' or 'button'."
   unknown-command: '<#F7567C>Unknown command.'
   cooldown: '<#F7567C>Please wait <#4ECDC4><time> <#F7567C>before doing that.'
@@ -122,3 +123,4 @@ flag-list:
     permission: '<gray>- permission <value/none>'
     cost: '<gray>- cost <value>'
     visible: '<gray>- visible_no_permission <true/false>'
+    provider: '<gray>- provider <id/none>'

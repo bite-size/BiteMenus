@@ -1,6 +1,8 @@
 package gg.bitesize.menus.models
 
 import gg.bitesize.menus.BiteMenus.Companion.INSTANCE
+import gg.bitesize.menus.api.event.MenuOpenEvent
+import gg.bitesize.menus.managers.ApiManager
 import gg.bitesize.menus.managers.EditorManager
 import gg.bitesize.menus.managers.FormatManager
 import gg.bitesize.menus.managers.PapiManager
@@ -56,45 +58,23 @@ data class Menu(
             return
         }
 
+        val isEditing = EditorManager.isEditing(player)
+        if (!isEditing) {
+            val event = MenuOpenEvent(player, MenuViewImpl(name))
+            Bukkit.getPluginManager().callEvent(event)
+            if (event.isCancelled) return
+        }
+        // Copied on the main thread so commands and API calls can't change the map mid-render
+        val snapshot = buttons.toMap()
+
         Bukkit.getScheduler().runTaskAsynchronously(INSTANCE, Runnable {
             val parsedTitle = PapiManager.parse(player, title)
             val componentTitle = FormatManager.parseMiniMessage(parsedTitle)
-            val isEditing = EditorManager.isEditing(player)
-            
-            val builtItems = mutableMapOf<Int, ItemStack>()
-            
-            buttons.forEach { (slot, button) ->
-                if (slot in 0 until size) {
-                    if (button.permission != null && !player.hasPermission(button.permission!!)) {
-                        if (!button.visibleNoPermission) return@forEach
-                    }
-
-                    val item = button.icon?.clone()
-                    if (item != null && item.hasItemMeta()) {
-                        val meta = item.itemMeta
-                        if (meta != null) {
-                            if (meta.hasDisplayName()) {
-                                val originalName = meta.displayName
-                                val parsed = if (isEditing) originalName else PapiManager.parse(player, originalName)
-                                meta.setDisplayName(FormatManager.parseMiniMessage(parsed))
-                            }
-                            
-                            if (meta.hasLore()) {
-                                val newLore = mutableListOf<String>()
-                                meta.lore?.forEach { line ->
-                                    val parsed = if (isEditing) line else PapiManager.parse(player, line)
-                                    newLore.add(FormatManager.parseMiniMessage(parsed))
-                                }
-                                meta.lore = newLore
-                            }
-                            item.itemMeta = meta
-                        }
-                    }
-                    if (item != null) builtItems[slot] = item
-                }
-            }
+            val builtItems = buildItems(player, snapshot, isEditing)
 
             Bukkit.getScheduler().runTask(INSTANCE, Runnable {
+                if (!isEditing) applyProviders(player, snapshot, builtItems, isRefresh = false)
+
                 val holder = MenuHolder(this)
                 val inventory = Bukkit.createInventory(holder, size, componentTitle)
                 holder.setInventory(inventory)
@@ -135,46 +115,63 @@ data class Menu(
     }
 
     fun refresh(player: Player, inventory: Inventory) {
-        Bukkit.getScheduler().runTaskAsynchronously(INSTANCE, Runnable {
-            val isEditing = EditorManager.isEditing(player)
-            val builtItems = mutableMapOf<Int, ItemStack>()
-            
-            buttons.forEach { (slot, button) ->
-                if (slot in 0 until size) {
-                    if (button.permission != null && !player.hasPermission(button.permission!!)) {
-                        if (!button.visibleNoPermission) return@forEach
-                    }
+        val isEditing = EditorManager.isEditing(player)
+        val snapshot = buttons.toMap()
 
-                    val item = button.icon?.clone()
-                    if (item != null && item.hasItemMeta()) {
-                        val meta = item.itemMeta
-                        if (meta != null) {
-                            if (meta.hasDisplayName()) {
-                                val originalName = meta.displayName
-                                val parsed = if (isEditing) originalName else PapiManager.parse(player, originalName)
-                                meta.setDisplayName(FormatManager.parseMiniMessage(parsed))
-                            }
-                            
-                            if (meta.hasLore()) {
-                                val newLore = mutableListOf<String>()
-                                meta.lore?.forEach { line ->
-                                    val parsed = if (isEditing) line else PapiManager.parse(player, line)
-                                    newLore.add(FormatManager.parseMiniMessage(parsed))
-                                }
-                                meta.lore = newLore
-                            }
-                            item.itemMeta = meta
-                        }
-                    }
-                    if (item != null) builtItems[slot] = item
-                }
-            }
-            
+        Bukkit.getScheduler().runTaskAsynchronously(INSTANCE, Runnable {
+            val builtItems = buildItems(player, snapshot, isEditing)
+
             Bukkit.getScheduler().runTask(INSTANCE, Runnable {
+                if (!isEditing) applyProviders(player, snapshot, builtItems, isRefresh = true)
                 builtItems.forEach { (slot, item) ->
                     inventory.setItem(slot, item)
                 }
             })
         })
+    }
+
+    private fun canSee(player: Player, button: Button): Boolean =
+        button.permission == null || player.hasPermission(button.permission!!) || button.visibleNoPermission
+
+    /** Renders each visible button's stored icon. Runs off the main thread. */
+    private fun buildItems(player: Player, snapshot: Map<Int, Button>, isEditing: Boolean): MutableMap<Int, ItemStack> {
+        val builtItems = mutableMapOf<Int, ItemStack>()
+        snapshot.forEach { (slot, button) ->
+            if (slot !in 0 until size || !canSee(player, button)) return@forEach
+            button.icon?.let { builtItems[slot] = renderItem(player, it, isEditing) }
+        }
+        return builtItems
+    }
+
+    /** Swaps in items from API item providers. Runs on the main thread, as the API promises providers. */
+    private fun applyProviders(player: Player, snapshot: Map<Int, Button>, builtItems: MutableMap<Int, ItemStack>, isRefresh: Boolean) {
+        snapshot.forEach { (slot, button) ->
+            if (button.provider == null || slot !in 0 until size || !canSee(player, button)) return@forEach
+            ApiManager.provideItem(button, player, this, slot, isRefresh)?.let {
+                builtItems[slot] = renderItem(player, it, isEditing = false)
+            }
+        }
+    }
+
+    private fun renderItem(player: Player, source: ItemStack, isEditing: Boolean): ItemStack {
+        val item = source.clone()
+        if (!item.hasItemMeta()) return item
+        val meta = item.itemMeta ?: return item
+        if (meta.hasDisplayName()) {
+            val originalName = meta.displayName
+            val parsed = if (isEditing) originalName else PapiManager.parse(player, originalName)
+            meta.setDisplayName(FormatManager.parseMiniMessage(parsed))
+        }
+
+        if (meta.hasLore()) {
+            val newLore = mutableListOf<String>()
+            meta.lore?.forEach { line ->
+                val parsed = if (isEditing) line else PapiManager.parse(player, line)
+                newLore.add(FormatManager.parseMiniMessage(parsed))
+            }
+            meta.lore = newLore
+        }
+        item.itemMeta = meta
+        return item
     }
 }

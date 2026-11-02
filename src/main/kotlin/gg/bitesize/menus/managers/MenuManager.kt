@@ -81,7 +81,8 @@ object MenuManager {
                 closeOnClick = buttonSection.getBoolean("flags.close_on_click", false),
                 permission = buttonSection.getString("flags.permission"),
                 cost = buttonSection.getDouble("flags.cost", 0.0),
-                visibleNoPermission = buttonSection.getBoolean("flags.visible_no_permission", true)
+                visibleNoPermission = buttonSection.getBoolean("flags.visible_no_permission", true),
+                provider = buttonSection.getString("flags.provider")?.lowercase()
             )
         }
         return menu
@@ -146,6 +147,7 @@ object MenuManager {
             if (button.permission != null) config.set("$path.flags.permission", button.permission)
             config.set("$path.flags.cost", button.cost)
             config.set("$path.flags.visible_no_permission", button.visibleNoPermission)
+            if (button.provider != null) config.set("$path.flags.provider", button.provider)
         }
 
         config.save(file)

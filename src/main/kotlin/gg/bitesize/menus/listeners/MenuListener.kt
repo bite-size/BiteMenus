@@ -1,6 +1,8 @@
 package gg.bitesize.menus.listeners
 
 import gg.bitesize.menus.BiteMenus.Companion.INSTANCE
+import gg.bitesize.menus.api.event.ButtonClickEvent
+import gg.bitesize.menus.managers.ApiManager
 import gg.bitesize.menus.managers.ActionQueueManager
 import gg.bitesize.menus.managers.ConfigManager
 import gg.bitesize.menus.managers.CooldownManager
@@ -11,6 +13,8 @@ import gg.bitesize.menus.managers.FormatManager
 import gg.bitesize.menus.managers.PapiManager
 import gg.bitesize.menus.models.MenuHolder
 import gg.bitesize.menus.models.Button
+import gg.bitesize.menus.models.MenuViewImpl
+import gg.bitesize.menus.models.toApi
 import org.bukkit.Bukkit
 import org.bukkit.Material
 import org.bukkit.entity.Player
@@ -23,6 +27,8 @@ import org.bukkit.event.inventory.InventoryType
 import java.util.concurrent.TimeUnit
 
 class MenuListener : Listener {
+
+    private val actionTagRegex = Regex("""^\[([A-Za-z0-9_\-]+)]\s*(.*)$""", RegexOption.DOT_MATCHES_ALL)
 
     @EventHandler
     fun onClick(event: InventoryClickEvent) {
@@ -70,6 +76,11 @@ class MenuListener : Listener {
             return
         }
 
+        val clickType = event.click
+        val clickEvent = ButtonClickEvent(player, MenuViewImpl(menu.name), slot, button.toApi(), clickType)
+        Bukkit.getPluginManager().callEvent(clickEvent)
+        if (clickEvent.isCancelled) return
+
         val cooldownKey = "btn_${menu.name}_$slot"
         if (button.cooldown > 0 && CooldownManager.isOnCooldown(player, cooldownKey)) {
             val time = CooldownManager.getRemainingFormatted(player, cooldownKey)
@@ -112,28 +123,29 @@ class MenuListener : Listener {
                     .replace("@p", player.name, ignoreCase = true)
                 
                 Bukkit.getScheduler().runTask(INSTANCE, Runnable {
-                    if (parsedAction.startsWith("[CLOSE]", ignoreCase = true)) {
-                        player.closeInventory()
-                    } else if (parsedAction.startsWith("[MESSAGE]", ignoreCase = true)) {
-                        val msg = parsedAction.substring(9).trim()
-                        FormatManager.send(player, msg, usePrefix = false)
-                    } else if (parsedAction.startsWith("[MENU]", ignoreCase = true)) {
-                        val menuName = parsedAction.substring(6).trim()
-                        val targetMenu = MenuManager.getMenu(menuName)
-                        if (targetMenu != null) {
-                            targetMenu.open(player)
-                        } else {
-                            val msg = ConfigManager.getMessage("errors.menu-not-found", "<#F7567C>Menu not found.")
-                            FormatManager.error(player, msg)
+                    val match = actionTagRegex.find(parsedAction)
+                    val tag = match?.groupValues?.get(1)?.uppercase()
+                    val argument = match?.groupValues?.get(2)?.trim() ?: ""
+                    when (tag) {
+                        "CLOSE" -> player.closeInventory()
+                        "MESSAGE" -> FormatManager.send(player, argument, usePrefix = false)
+                        "MENU" -> {
+                            val targetMenu = MenuManager.getMenu(argument)
+                            if (targetMenu != null) {
+                                targetMenu.open(player)
+                            } else {
+                                val msg = ConfigManager.getMessage("errors.menu-not-found", "<#F7567C>Menu not found.")
+                                FormatManager.error(player, msg)
+                            }
                         }
-                    } else if (parsedAction.startsWith("[PLAYER]", ignoreCase = true)) {
-                        val cmd = parsedAction.substring(8).trim()
-                        player.performCommand(cmd)
-                    } else if (parsedAction.startsWith("[CONSOLE]", ignoreCase = true)) {
-                        val cmd = parsedAction.substring(9).trim()
-                        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), cmd)
-                    } else {
-                        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), parsedAction)
+                        "PLAYER" -> player.performCommand(argument)
+                        "CONSOLE" -> Bukkit.dispatchCommand(Bukkit.getConsoleSender(), argument)
+                        else -> {
+                            // Custom tags come from API plugins; anything else stays a raw console command
+                            if (tag == null || !ApiManager.runAction(tag, player, menu, slot, clickType, argument)) {
+                                Bukkit.dispatchCommand(Bukkit.getConsoleSender(), parsedAction)
+                            }
+                        }
                     }
                 })
             }
